@@ -2,7 +2,6 @@ package java8.ex03;
 
 import java8.data.Data;
 import java8.data.domain.Customer;
-import java8.data.domain.Gender;
 import java8.data.domain.Order;
 import java8.data.domain.Pizza;
 import org.junit.Test;
@@ -13,97 +12,117 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.*;
-
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * Exercice 03 - Collectors
  */
 public class Stream_03_Test {
 
-	@Test
-	public void test_max() throws Exception {
+    @Test
+    public void test_max() throws Exception {
 
-		List<Order> orders = new Data().getOrders();
+        List<Order> orders = new Data().getOrders();
 
-		// TODO Retrouver la commande avec le prix le plus élevé
-		Optional<Order> result = null;
+        // TODO Retrouver la commande avec le prix le plus élevé
+        Optional<Order> result = null;
+        result = orders.stream()
+                .max(Comparator.comparing(Order::getPrice));
 
-		assertThat(result.isPresent(), is(true));
-		assertThat(result.get().getPrice(), is(2200.0));
-	}
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getPrice(), is(2200.0));
+    }
 
-	@Test
-	public void test_min() throws Exception {
+    @Test
+    public void test_min() throws Exception {
 
-		List<Order> orders = new Data().getOrders();
+        List<Order> orders = new Data().getOrders();
 
-		// TODO Retrouver la commande avec le prix le moins élevé
-		Optional<Order> result = null;
+        // TODO Retrouver la commande avec le prix le moins élevé
+        Optional<Order> result = null;
+        result = orders.stream()
+                .min(Comparator.comparing(Order::getPrice));
 
-		assertThat(result.isPresent(), is(true));
-		assertThat(result.get().getPrice(), is(1000.0));
-	}
 
-	@Test
-	public void test_map_collect_joining() throws Exception {
+        assertThat(result.isPresent(), is(true));
+        assertThat(result.get().getPrice(), is(1000.0));
+    }
 
-		List<Customer> customers = new Data().getCustomers();
+    @Test
+    public void test_map_collect_joining() throws Exception {
 
-		// TODO construire une chaîne contenant les prénoms des clients triés et séparés
-		// par le caractère "|"
-		String result = null;
+        List<Customer> customers = new Data().getCustomers();
 
-		assertThat(result, is("Alexandra|Cyril|Johnny|Marion|Sophie"));
-	}
+        // TODO construire une chaîne contenant les prénoms des clients triés et séparés
+        // par le caractère "|"
+        String result = null;
+        result = customers.stream()
+                .map(customer -> customer.getFirstname())
+                .sorted()
+                .collect(Collectors.joining("|"));
 
-	@Test
-	public void test_flatMap() throws Exception {
 
-		List<Order> orders = new Data().getOrders();
+        assertThat(result, is("Alexandra|Cyril|Johnny|Marion|Sophie"));
+    }
 
-		// TODO Extraire la liste des pizzas de toutes les commandes
-		List<Pizza> result = null;
+    @Test
+    public void test_flatMap() throws Exception {
 
-		assertThat(result.size(), is(9));
-	}
+        List<Order> orders = new Data().getOrders();
 
-	@Test
-	public void test_flatMap_distinct() throws Exception {
+        // TODO Extraire la liste des pizzas de toutes les commandes
+        List<Pizza> result = null;
+        result = orders.stream()
+                .flatMap(order -> order.getPizzas().stream())
+                .collect(Collectors.toList());
 
-		List<Order> orders = new Data().getOrders();
+        assertThat(result.size(), is(9));
+    }
 
-		// TODO Extraire la liste des différentes pizzas de toutes les commandes
-		List<Pizza> result = null;
+    @Test
+    public void test_flatMap_distinct() throws Exception {
 
-		assertThat(result.size(), is(4));
-	}
+        List<Order> orders = new Data().getOrders();
 
-	@Test
-	public void test_grouping() throws Exception {
+        // TODO Extraire la liste des différentes pizzas de toutes les commandes
+        List<Pizza> result = null;
+        result = orders.stream()
+                .flatMap(order -> order.getPizzas().stream())
+                .distinct()
+                .collect(Collectors.toList());
 
-		List<Order> orders = new Data().getOrders();
 
-		// TODO construire une Map <Client, Commandes effectuées par le client
-		Map<Customer, List<Order>> result = null;
+        assertThat(result.size(), is(4));
+    }
 
-		assertThat(result.size(), is(2));
-		assertThat(result.get(new Customer(1)), hasSize(4));
-		assertThat(result.get(new Customer(2)), hasSize(4));
-	}
+    @Test
+    public void test_grouping() throws Exception {
 
-	@Test
-	public void test_partitionning() throws Exception {
-		List<Pizza> pizzas = new Data().getPizzas();
+        List<Order> orders = new Data().getOrders();
 
-		// TODO Séparer la liste des pizzas en 2 ensembles :
-		// TODO true -> les pizzas dont le nom commence par "L"
-		// TODO false -> les autres
-		Map<Boolean, List<Pizza>> result = null;
+        // TODO construire une Map <Client, Commandes effectuées par le client
+        Map<Customer, List<Order>> result = null;
+        result = orders.stream()
+                .collect(Collectors.groupingBy(o -> o.getCustomer()));
 
-		assertThat(result.get(true), hasSize(6));
-		assertThat(result.get(false), hasSize(2));
-	}
+        assertThat(result.size(), is(2));
+        assertThat(result.get(new Customer(1)), hasSize(4));
+        assertThat(result.get(new Customer(2)), hasSize(4));
+    }
+
+    @Test
+    public void test_partitionning() throws Exception {
+        List<Pizza> pizzas = new Data().getPizzas();
+
+        // TODO Séparer la liste des pizzas en 2 ensembles :
+        // TODO true -> les pizzas dont le nom commence par "L"
+        // TODO false -> les autres
+        Map<Boolean, List<Pizza>> result = null;
+        result = pizzas.stream().collect(Collectors.partitioningBy(o -> o.getName().startsWith("L")));
+
+        assertThat(result.get(true), hasSize(6));
+        assertThat(result.get(false), hasSize(2));
+    }
 }
